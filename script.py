@@ -23,23 +23,27 @@ from draw import *
 def first_pass( commands ):
     basename = ""
     frames = -1
-    check = 0
     for command in commands:
-        if command[0] = 'frames':
+        if command[0] == 'frames':
             try:
                 frames = command[1]
             except:
-                print("number of frames absent")
+                print("frames parameter is incorrect")
                 sys.exit(1)
-        if command[0] = 'basename':
-            check = 1
+        if command[0] == 'basename':
             try:
                 basename = command[1]
             except:
-                print("basename is not set")
-        if command[0] = 'vary':
-            try:
-                
+                print("basename parameter is incorrect")
+        if command[0] == 'vary':
+            if frames == -1:
+                print("vary used without setting frames")
+                sys.exit(1)
+    if basename == "":
+        basename = "default"
+        print("basename set to default")
+    return (basename,frames)
+    
 
 
 """======== second_pass( commands ) ==========
@@ -60,7 +64,14 @@ def first_pass( commands ):
   appropirate value. 
   ===================="""
 def second_pass( commands, num_frames ):
-    pass
+    a = []
+    for i in range(num_frames):
+        a.append({}) 
+    for command in commands:
+        if command[0] == 'vary':
+            if command[2] >= command[3] or command[3] >= num_frames:
+                print("vary variable " + command[1] + " has invalid frame range")
+                sys.exit(1)
 
 
 def run(filename):
@@ -84,8 +95,8 @@ def run(filename):
     screen = new_screen()
     tmp = []
     step = 0.1
-    first_pass(commands)
-    second_pass(
+    (basename,frames) = first_pass(commands)
+    second_pass(commands,frames)
     for command in commands:
         print command
         c = command[0]

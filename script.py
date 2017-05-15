@@ -20,6 +20,8 @@ from draw import *
 
   jdyrlandweaver
   ==================== """
+global c_frame 
+
 def first_pass( commands ):
     basename = ""
     frames = -1
@@ -72,6 +74,16 @@ def second_pass( commands, num_frames ):
             if command[2] >= command[3] or command[3] >= num_frames:
                 print("vary variable " + command[1] + " has invalid frame range")
                 sys.exit(1)
+            name = command[1]
+            value = command[5] - command[4]
+            f_range = command[3] - command[2]
+            c = 0.0
+            for i in range(command[2],command[3]):
+                if name in a[i]:
+                    print("Overlapping and conflciting frames for vary variable " + name)
+                    sys.exit(1)
+                a[i][name] = (c / f_range) * (value) + command[4]
+    return a
 
 
 def run(filename):
@@ -96,7 +108,7 @@ def run(filename):
     tmp = []
     step = 0.1
     (basename,frames) = first_pass(commands)
-    second_pass(commands,frames)
+    varies = second_pass(commands,frames)
     for command in commands:
         print command
         c = command[0]
@@ -122,17 +134,41 @@ def run(filename):
             draw_polygons(tmp, screen, color)
             tmp = []
         elif c == 'move':
-            tmp = make_translate(args[0], args[1], args[2])
+            x = args[0]
+            y = args[1]
+            z = args[2]
+            try:
+                i = a[c_frame][args[3]]
+                x *= i
+                y *= i
+                z *= i
+            except:
+                pass
+            tmp = make_translate(x, y, z)
             matrix_mult(stack[-1], tmp)
             stack[-1] = [x[:] for x in tmp]
             tmp = []
         elif c == 'scale':
-            tmp = make_scale(args[0], args[1], args[2])
+            x = args[0]
+            y = args[1]
+            z = args[2]
+            try:
+                i = a[c_frame][args[3]]
+                x *= i
+                y *= i
+                z *= i
+            except:
+                pass
+            tmp = make_translate(x, y, z)
             matrix_mult(stack[-1], tmp)
             stack[-1] = [x[:] for x in tmp]
             tmp = []
         elif c == 'rotate':
             theta = args[1] * (math.pi/180)
+            try:
+                theta *= a[c_frame][args[2]]
+            except:
+                pass
             if args[0] == 'x':
                 tmp = make_rotX(theta)
             elif args[0] == 'y':

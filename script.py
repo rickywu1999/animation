@@ -1,4 +1,5 @@
 import mdl
+import os
 from display import *
 from matrix import *
 from draw import *
@@ -44,6 +45,9 @@ def first_pass( commands ):
     if basename == "":
         basename = "default"
         print("basename set to default")
+    if frames == -1:
+        frames = 1
+        print("frames set to default")
     return (basename,frames)
     
 
@@ -83,6 +87,11 @@ def second_pass( commands, num_frames ):
                     print("Overlapping and conflciting frames for vary variable " + name)
                     sys.exit(1)
                 a[i][name] = (c / f_range) * (value) + command[4]
+                print(str(f_range))
+                print(str(value))
+                print(command[4])
+                
+                print(name + " : " + str((c / f_range) * (value) + command[4]))
     return a
 
 
@@ -109,83 +118,80 @@ def run(filename):
     step = 0.1
     (basename,frames) = first_pass(commands)
     varies = second_pass(commands,frames)
-    for command in commands:
-        print command
-        c = command[0]
-        args = command[1:]
+    c_frame = 0
+    for c_frame in range(frames):
+        for command in commands:
+            print command
+            c = command[0]
+            args = command[1:]
 
-        if c == 'box':
-            add_box(tmp,
-                    args[0], args[1], args[2],
-                    args[3], args[4], args[5])
-            matrix_mult( stack[-1], tmp )
-            draw_polygons(tmp, screen, color)
-            tmp = []
-        elif c == 'sphere':
-            add_sphere(tmp,
-                       args[0], args[1], args[2], args[3], step)
-            matrix_mult( stack[-1], tmp )
-            draw_polygons(tmp, screen, color)
-            tmp = []
-        elif c == 'torus':
-            add_torus(tmp,
-                      args[0], args[1], args[2], args[3], args[4], step)
-            matrix_mult( stack[-1], tmp )
-            draw_polygons(tmp, screen, color)
-            tmp = []
-        elif c == 'move':
-            x = args[0]
-            y = args[1]
-            z = args[2]
-            try:
-                i = a[c_frame][args[3]]
-                x *= i
-                y *= i
-                z *= i
-            except:
-                pass
-            tmp = make_translate(x, y, z)
-            matrix_mult(stack[-1], tmp)
-            stack[-1] = [x[:] for x in tmp]
-            tmp = []
-        elif c == 'scale':
-            x = args[0]
-            y = args[1]
-            z = args[2]
-            try:
-                i = a[c_frame][args[3]]
-                x *= i
-                y *= i
-                z *= i
-            except:
-                pass
-            tmp = make_translate(x, y, z)
-            matrix_mult(stack[-1], tmp)
-            stack[-1] = [x[:] for x in tmp]
-            tmp = []
-        elif c == 'rotate':
-            theta = args[1] * (math.pi/180)
-            try:
-                theta *= a[c_frame][args[2]]
-            except:
-                pass
-            if args[0] == 'x':
-                tmp = make_rotX(theta)
-            elif args[0] == 'y':
-                tmp = make_rotY(theta)
-            else:
-                tmp = make_rotZ(theta)
-            matrix_mult( stack[-1], tmp )
-            stack[-1] = [ x[:] for x in tmp]
-            tmp = []
-        elif c == 'push':
-            stack.append([x[:] for x in stack[-1]] )
-        elif c == 'pop':
-            stack.pop()
-        elif c == 'display':
-            display(screen)
-        elif c == 'save':
-            save_extension(screen, args[0])
-        elif c == 'frames':
-            frames = args[1]
-        
+            if c == 'box':
+                add_box(tmp,
+                        args[0], args[1], args[2],
+                        args[3], args[4], args[5])
+                matrix_mult( stack[-1], tmp )
+                draw_polygons(tmp, screen, color)
+                tmp = []
+            elif c == 'sphere':
+                add_sphere(tmp,
+                           args[0], args[1], args[2], args[3], step)
+                matrix_mult( stack[-1], tmp )
+                draw_polygons(tmp, screen, color)
+                tmp = []
+            elif c == 'torus':
+                add_torus(tmp,
+                          args[0], args[1], args[2], args[3], args[4], step)
+                matrix_mult( stack[-1], tmp )
+                draw_polygons(tmp, screen, color)
+                tmp = []
+            elif c == 'move':
+                x = args[0]
+                y = args[1]
+                z = args[2]
+                try:
+                    i = a[c_frame][args[3]]
+                    tmp = make_translate(x*i,y*i,z*i)
+                except:
+                    tmp = make_translate(x, y, z)
+                matrix_mult(stack[-1], tmp)
+                stack[-1] = [q[:] for q in tmp]
+                tmp = []
+            elif c == 'scale':
+                x = args[0]
+                y = args[1]
+                z = args[2]
+                try:
+                    i = a[c_frame][args[3]]
+                    tmp = make_translate(x*i,y*i,z*i)
+                except:
+                    tmp = make_translate(x, y, z)
+                matrix_mult(stack[-1], tmp)
+                stack[-1] = [q[:] for q in tmp]
+                tmp = []
+            elif c == 'rotate':
+                theta = args[1] * (math.pi/180)
+                try:
+                    theta *= a[c_frame][args[2]]
+                except:
+                    "lol"
+                if args[0] == 'x':
+                    tmp = make_rotX(theta)
+                elif args[0] == 'y':
+                    tmp = make_rotY(theta)
+                else:
+                    tmp = make_rotZ(theta)
+                matrix_mult( stack[-1], tmp )
+                stack[-1] = [ x[:] for x in tmp]
+                tmp = []
+            elif c == 'push':
+                stack.append([x[:] for x in stack[-1]] )
+            elif c == 'pop':
+                stack.pop()
+            elif c == 'display':
+                display(screen)
+            elif c == 'save':
+                save_extension(screen, args[0])
+            if frames > 1:
+                os.system("cd anim/")
+                save_extension(screen, basename + "[:03]".format(c_frame))
+    make_animation(basename)

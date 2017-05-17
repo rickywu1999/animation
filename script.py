@@ -84,14 +84,10 @@ def second_pass( commands, num_frames ):
             c = 0.0
             for i in range(command[2],command[3]):
                 if name in a[i]:
-                    print("Overlapping and conflciting frames for vary variable " + name)
+                    print("Overlapping and conflicting frames for vary variable " + name)
                     sys.exit(1)
                 a[i][name] = (c / f_range) * (value) + command[4]
-                print(str(f_range))
-                print(str(value))
-                print(command[4])
-                
-                print(name + " : " + str((c / f_range) * (value) + command[4]))
+                c += 1.0
     return a
 
 
@@ -100,8 +96,6 @@ def run(filename):
     This function runs an mdl script
     """
     color = [255, 255, 255]
-    tmp = new_matrix()
-    ident( tmp )
 
     p = mdl.parseFile(filename)
 
@@ -111,17 +105,17 @@ def run(filename):
         print "Parsing failed."
         return
 
-    ident(tmp)
-    stack = [ [x[:] for x in tmp] ]
-    screen = new_screen()
-    tmp = []
-    step = 0.1
     (basename,frames) = first_pass(commands)
-    varies = second_pass(commands,frames)
+    knobs = second_pass(commands,frames)
     c_frame = 0
     for c_frame in range(frames):
+        stack = [ [x[:] for x in tmp] ]
+        screen = new_screen()
+        tmp = []
+        step = 0.1
+        tmp = new_matrix()
+        ident( tmp )
         for command in commands:
-            print command
             c = command[0]
             args = command[1:]
 
@@ -149,7 +143,7 @@ def run(filename):
                 y = args[1]
                 z = args[2]
                 try:
-                    i = a[c_frame][args[3]]
+                    i = knobs[c_frame][args[3]]
                     tmp = make_translate(x*i,y*i,z*i)
                 except:
                     tmp = make_translate(x, y, z)
@@ -161,7 +155,7 @@ def run(filename):
                 y = args[1]
                 z = args[2]
                 try:
-                    i = a[c_frame][args[3]]
+                    i = knobs[c_frame][args[3]]
                     tmp = make_translate(x*i,y*i,z*i)
                 except:
                     tmp = make_translate(x, y, z)
@@ -171,7 +165,7 @@ def run(filename):
             elif c == 'rotate':
                 theta = args[1] * (math.pi/180)
                 try:
-                    theta *= a[c_frame][args[2]]
+                    theta *= knobs[c_frame][args[2]]
                 except:
                     "lol"
                 if args[0] == 'x':
@@ -191,7 +185,9 @@ def run(filename):
                 display(screen)
             elif c == 'save':
                 save_extension(screen, args[0])
-            if frames > 1:
-                os.system("cd anim/")
-                save_extension(screen, basename + "[:03]".format(c_frame))
+            if c_frame == frames - 1:
+                save_extension(screen, args[0])
+        name = "anim/" + basename + "%03d"%c_frame
+        save_ppm(screen,name)
+        clear_screen(screen)
     make_animation(basename)

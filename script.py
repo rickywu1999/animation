@@ -96,9 +96,12 @@ def run(filename):
     This function runs an mdl script
     """
     color = [255, 255, 255]
-
+    screen = new_screen()
+    step = 0.1
+    tmp = new_matrix()
+    ident( tmp )
+    
     p = mdl.parseFile(filename)
-
     if p:
         (commands, symbols) = p
     else:
@@ -107,14 +110,11 @@ def run(filename):
 
     (basename,frames) = first_pass(commands)
     knobs = second_pass(commands,frames)
-    c_frame = 0
     for c_frame in range(frames):
-        stack = [ [x[:] for x in tmp] ]
-        screen = new_screen()
-        tmp = []
-        step = 0.1
         tmp = new_matrix()
-        ident( tmp )
+        ident(tmp)
+        stack = [ [x[:] for x in tmp] ]
+        tmp = []
         for command in commands:
             c = command[0]
             args = command[1:]
@@ -156,9 +156,10 @@ def run(filename):
                 z = args[2]
                 try:
                     i = knobs[c_frame][args[3]]
-                    tmp = make_translate(x*i,y*i,z*i)
+                    tmp = make_scale(x*i,y*i,z*i)
+                    print(str(i))
                 except:
-                    tmp = make_translate(x, y, z)
+                    tmp = make_scale(x, y, z)
                 matrix_mult(stack[-1], tmp)
                 stack[-1] = [q[:] for q in tmp]
                 tmp = []
@@ -184,8 +185,6 @@ def run(filename):
             elif c == 'display':
                 display(screen)
             elif c == 'save':
-                save_extension(screen, args[0])
-            if c_frame == frames - 1:
                 save_extension(screen, args[0])
         name = "anim/" + basename + "%03d"%c_frame
         save_ppm(screen,name)

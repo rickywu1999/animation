@@ -1,5 +1,6 @@
 import mdl
 import os
+import sys
 from display import *
 from matrix import *
 from draw import *
@@ -21,23 +22,15 @@ from draw import *
 
   jdyrlandweaver
   ==================== """
-global c_frame 
 
 def first_pass( commands ):
     basename = ""
     frames = -1
     for command in commands:
         if command[0] == 'frames':
-            try:
-                frames = command[1]
-            except:
-                print("frames parameter is incorrect")
-                sys.exit(1)
+            frames = command[1]
         if command[0] == 'basename':
-            try:
-                basename = command[1]
-            except:
-                print("basename parameter is incorrect")
+            basename = command[1]
         if command[0] == 'vary':
             if frames == -1:
                 print("vary used without setting frames")
@@ -82,7 +75,7 @@ def second_pass( commands, num_frames ):
             value = command[5] - command[4]
             f_range = command[3] - command[2]
             c = 0.0
-            for i in range(command[2],command[3]):
+            for i in range(command[2],command[3] + 1):
                 if name in a[i]:
                     print("Overlapping and conflicting frames for vary variable " + name)
                     sys.exit(1)
@@ -143,7 +136,7 @@ def run(filename):
                 y = args[1]
                 z = args[2]
                 try:
-                    i = knobs[c_frame][args[3]]
+                    i = knobs[c_frame-1][args[3]]
                     tmp = make_translate(x*i,y*i,z*i)
                 except:
                     tmp = make_translate(x, y, z)
@@ -155,7 +148,7 @@ def run(filename):
                 y = args[1]
                 z = args[2]
                 try:
-                    i = knobs[c_frame][args[3]]
+                    i = knobs[c_frame-1][args[3]]
                     tmp = make_scale(x*i,y*i,z*i)
                     print(str(i))
                 except:
@@ -166,7 +159,7 @@ def run(filename):
             elif c == 'rotate':
                 theta = args[1] * (math.pi/180)
                 try:
-                    theta *= knobs[c_frame][args[2]]
+                    theta *= knobs[c_frame-1][args[2]]
                 except:
                     "lol"
                 if args[0] == 'x':
